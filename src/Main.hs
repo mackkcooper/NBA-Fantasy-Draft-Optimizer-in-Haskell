@@ -6,32 +6,13 @@ main :: IO ()
 main = do
     csvData <- readFile "data/data_set.csv"
     let my_players = (lines csvData)
-
     let avail = generatePlayerList my_players
-    -- print ("Players")
-    -- print avail
-
     let tot = playerTotals avail
-    -- print ("Totals:")
-    -- print tot
-
     let avg = playerAverages avail
-    -- print ("Averages:")
-    -- print avg
-
     let std = playerStdDev pPTS (avail)
-    -- print ("Std Devs:")
-    -- print std
-
     let net = generateNetPlayerList [avg] avail
-    -- print ("Net Stats:")
-    -- print net
-
     let net_avg = netPlayerAverages net
-    -- print ("Net Averages:")
-    -- print net_avg
-
-    putStrLn "Done."
+    putStrLn "Run succesfully."
 
 
 data Player = Player {
@@ -116,6 +97,46 @@ playerStdDev f xs = sqrt (summation / size) where
     sum_func = (\ player -> ((f player) - mean) ^ 2 )
 
 
+playerToStr :: Player -> String
+playerToStr p = 
+    (pName p) ++ " | " ++
+    (show (pFGM p)) ++ " | " ++
+    (show (pFGA p)) ++ " | " ++
+    (show (pFTM p)) ++ " | " ++
+    (show (pFTA p)) ++ " | " ++
+    (show (p3PM p)) ++ " | " ++
+    (show (pREB p)) ++ " | " ++
+    (show (pAST p)) ++ " | " ++
+    (show (pSTL p)) ++ " | " ++
+    (show (pBLK p)) ++ " | " ++
+    (show (pTOV p)) ++ " | "
+
+
+playerListToStr :: [Player] -> String
+playerListToStr list = case fmap playerToStr list of
+    (x:xs) -> header ++ (foldl (\ a b -> a ++ "\n" ++ b) x xs) ++ "\n"
+    [] -> "\nEmpty Player List\n"
+    where header = "\nPLAYER NAME | FGM | FGA | FTM | FTA | 3PM | REB | AST | STL | BLK | TOV | PTS\n"
+
+
+printPlayers :: IO ()
+printPlayers = do
+    csvData <- readFile "data/data_set.csv"
+    let my_players = (lines csvData)
+    let avail = generatePlayerList my_players
+    putStrLn (playerListToStr avail)
+    return ()
+
+
+printPlayerAverages :: IO ()
+printPlayerAverages = do
+    csvData <- readFile "data/data_set.csv"
+    let my_players = (lines csvData)
+    let avail = generatePlayerList my_players
+    let avg = playerAverages avail
+    putStrLn (playerToStr avg)
+
+
 data NetPlayer = NetPlayer {
     nName :: String,
     nFGP :: Float,
@@ -191,3 +212,33 @@ netPlayerAverages xs = (\ a -> NetPlayer
 --     size = fromIntegral (length xs) :: Float
 --     summation = sum (fmap sum_func xs)
 --     sum_func = (\ player -> ((f player) - mean) ^ 2 )
+
+
+netPlayerToStr :: NetPlayer -> String
+netPlayerToStr p = 
+    (nName p) ++ " | " ++
+    (show (nFGP p)) ++ " | " ++
+    (show (nFTP p)) ++ " | " ++
+    (show (n3PM p)) ++ " | " ++
+    (show (nREB p)) ++ " | " ++
+    (show (nAST p)) ++ " | " ++
+    (show (nSTL p)) ++ " | " ++
+    (show (nBLK p)) ++ " | " ++
+    (show (nTOV p)) ++ " | "
+
+
+netPlayerListToStr :: [NetPlayer] -> String
+netPlayerListToStr list = case fmap netPlayerToStr list of
+    (x:xs) -> header ++ (foldl (\ a b -> a ++ "\n" ++ b) x xs) ++ "\n"
+    [] -> "\nEmpty Net Player List\n"
+    where header = "\nNET PLAYER NAME | FGP | FTP | 3PM | REB | AST | STL | BLK | TOV | PTS\n"
+
+
+printNetPlayers :: IO ()
+printNetPlayers = do
+    csvData <- readFile "data/data_set.csv"
+    let my_players = (lines csvData)
+    let avail = generatePlayerList my_players
+    let avg = playerAverages avail
+    let net = generateNetPlayerList [avg] avail
+    putStrLn (netPlayerListToStr net)
