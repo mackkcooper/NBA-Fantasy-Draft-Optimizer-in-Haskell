@@ -24,8 +24,8 @@ main = do
     -- print std
 
     let net = generateNetPlayerList [avg] avail
-    print ("Net Stats:")
-    print net
+    -- print ("Net Stats:")
+    -- print net
 
     putStrLn "Done."
 
@@ -61,10 +61,12 @@ generatePlayer playerString = case (splitOn "," playerString) of
         (read blk :: Float) 
         (read tov :: Float) 
         (read pts :: Float)
+    _ -> Player "FAIL" 0 0 0 0 0 0 0 0 0 0 0
 
 
 generatePlayerList :: [String] -> [Player]
 generatePlayerList (x:xs) = fmap (generatePlayer) xs
+generatePlayerList [] = []
 
 
 averages :: [Player] -> Player
@@ -99,6 +101,7 @@ totals (x:xs) = foldl (\ a b -> Player
         ((pTOV a) + (pTOV b)) 
         ((pPTS a) + (pPTS b)) 
     ) x xs
+totals [] = Player "Totals" 0 0 0 0 0 0 0 0 0 0 0
 
 
 playerStdDev :: (Player -> Float) -> [Player] -> Float
@@ -145,8 +148,3 @@ generateNetPlayer player roster = NetPlayer
 
 generateNetPlayerList :: [Player] -> [Player] -> [NetPlayer]
 generateNetPlayerList roster avail = [ generateNetPlayer p roster | p <- avail]
-
-
-
-
-
