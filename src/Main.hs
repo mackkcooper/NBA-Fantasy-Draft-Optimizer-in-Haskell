@@ -8,20 +8,20 @@ main = do
     let my_players = (lines csvData)
 
     let avail = generatePlayerList my_players
-    print ("Players")
-    print avail
+    -- print ("Players")
+    -- print avail
 
-    let tot = totals avail
-    print ("Totals:")
-    print tot
+    -- let tot = totals avail
+    -- print ("Totals:")
+    -- print tot
 
     let avg = averages avail
-    print ("Averages:")
-    print avg
+    -- print ("Averages:")
+    -- print avg
 
-    let std = playerStdDev pPTS (avail)
-    print ("Std Devs:")
-    print std
+    -- let std = playerStdDev pPTS (avail)
+    -- print ("Std Devs:")
+    -- print std
 
     let net = generateNetPlayerList [avg] avail
     print ("Net Stats:")
@@ -29,8 +29,22 @@ main = do
 
     putStrLn "Done."
 
-generatePlayerList :: [String] -> [Player]
-generatePlayerList (x:xs) = fmap (generatePlayer) xs
+
+data Player = Player {
+    pName :: String,
+    pFGM :: Float,
+    pFGA :: Float,
+    pFTM :: Float,
+    pFTA :: Float,
+    p3PM :: Float,
+    pREB :: Float,
+    pAST :: Float,
+    pSTL :: Float,
+    pBLK :: Float,
+    pTOV :: Float,
+    pPTS :: Float
+} deriving (Show)
+
 
 generatePlayer :: String -> Player
 generatePlayer playerString = case (splitOn "," playerString) of
@@ -48,27 +62,9 @@ generatePlayer playerString = case (splitOn "," playerString) of
         (read tov :: Float) 
         (read pts :: Float)
 
-generateNetPlayerList :: [Player] -> [Player] -> [NetPlayer]
-generateNetPlayerList roster avail = [ generateNetPlayer p roster | p <- avail]
 
-generateNetPlayer :: Player -> [Player] -> NetPlayer
-generateNetPlayer player roster = NetPlayer 
-    (pName player)
-    (diffPercentageStat pFGM pFGA) 
-    (diffPercentageStat pFTM pFTA) 
-    (diffCountingStat p3PM) 
-    (diffCountingStat pREB) 
-    (diffCountingStat pAST) 
-    (diffCountingStat pSTL) 
-    (diffCountingStat pBLK) 
-    (diffCountingStat pTOV) 
-    (diffCountingStat pPTS)
-    where 
-        diffPercentageStat = (\ fm fa -> (fm with / fa with) - (fm without / fa without) )
-        diffCountingStat = (\ f -> ((f with) / ((len roster)+1)) - ((f without) / (len roster)) )
-        len = (\ x -> fromIntegral (length x) :: Float)
-        with = totals (player:roster)
-        without = totals roster
+generatePlayerList :: [String] -> [Player]
+generatePlayerList (x:xs) = fmap (generatePlayer) xs
 
 
 averages :: [Player] -> Player
@@ -104,6 +100,7 @@ totals (x:xs) = foldl (\ a b -> Player
         ((pPTS a) + (pPTS b)) 
     ) x xs
 
+
 playerStdDev :: (Player -> Float) -> [Player] -> Float
 playerStdDev f xs = sqrt (summation / size) where 
     mean = f (averages xs)
@@ -111,20 +108,6 @@ playerStdDev f xs = sqrt (summation / size) where
     summation = sum (fmap sum_func xs)
     sum_func = (\ player -> ((f player) - mean) ^ 2 )
 
-data Player = Player {
-    pName :: String,
-    pFGM :: Float,
-    pFGA :: Float,
-    pFTM :: Float,
-    pFTA :: Float,
-    p3PM :: Float,
-    pREB :: Float,
-    pAST :: Float,
-    pSTL :: Float,
-    pBLK :: Float,
-    pTOV :: Float,
-    pPTS :: Float
-} deriving (Show)
 
 data NetPlayer = NetPlayer {
     nName :: String,
@@ -138,3 +121,32 @@ data NetPlayer = NetPlayer {
     nTOV :: Float,
     nPTS :: Float
 } deriving (Show)
+
+
+generateNetPlayer :: Player -> [Player] -> NetPlayer
+generateNetPlayer player roster = NetPlayer 
+    (pName player)
+    (diffPercentageStat pFGM pFGA) 
+    (diffPercentageStat pFTM pFTA) 
+    (diffCountingStat p3PM) 
+    (diffCountingStat pREB) 
+    (diffCountingStat pAST) 
+    (diffCountingStat pSTL) 
+    (diffCountingStat pBLK) 
+    (diffCountingStat pTOV) 
+    (diffCountingStat pPTS)
+    where 
+        diffPercentageStat = (\ fm fa -> (fm with / fa with) - (fm without / fa without) )
+        diffCountingStat = (\ f -> ((f with) / ((len roster)+1)) - ((f without) / (len roster)) )
+        len = (\ x -> fromIntegral (length x) :: Float)
+        with = totals (player:roster)
+        without = totals roster
+
+
+generateNetPlayerList :: [Player] -> [Player] -> [NetPlayer]
+generateNetPlayerList roster avail = [ generateNetPlayer p roster | p <- avail]
+
+
+
+
+
