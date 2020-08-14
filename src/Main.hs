@@ -9,13 +9,17 @@ main = do
 
     print ("Totals:")
     print (totals (generatePlayerList my_players))
+
     print ("Averages:")
     print (averages (generatePlayerList my_players))
+
+    print ("Std Devs:")
+    print (playerStdDev pPTS (generatePlayerList my_players))
     
     putStrLn "Done."
 
 generatePlayerList :: [String] -> [Player]
-generatePlayerList xs = fmap (generatePlayer) (tail xs)
+generatePlayerList (x:xs) = fmap (generatePlayer) xs
 
 generatePlayer :: String -> Player
 generatePlayer playerString = case (splitOn "," playerString) of
@@ -69,8 +73,12 @@ totals (x:xs) = foldl (\ a b -> Player
         ((pPTS a) + (pPTS b)) 
     ) x xs
 
-stdDev :: (Player -> Float) -> [Player] -> Float
-stdDev f (x:xs) = (f (averages (x:xs)))
+playerStdDev :: (Player -> Float) -> [Player] -> Float
+playerStdDev f xs = sqrt (summation / size) where 
+    mean = f (averages xs)
+    size = fromIntegral (length xs) :: Float
+    summation = sum (fmap sum_func xs)
+    sum_func = (\ player -> ((f player) - mean) ^ 2 )
 
 data Player = Player {
     pName :: String,
