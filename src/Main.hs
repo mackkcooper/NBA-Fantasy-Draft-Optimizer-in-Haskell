@@ -7,15 +7,26 @@ main = do
     csvData <- readFile "data/data_set.csv"
     let my_players = (lines csvData)
 
+    let avail = generatePlayerList my_players
+    print ("Players")
+    print avail
+
+    let tot = totals avail
     print ("Totals:")
-    print (totals (generatePlayerList my_players))
+    print tot
 
+    let avg = averages avail
     print ("Averages:")
-    print (averages (generatePlayerList my_players))
+    print avg
 
+    let std = playerStdDev pPTS (avail)
     print ("Std Devs:")
-    print (playerStdDev pPTS (generatePlayerList my_players))
-    
+    print std
+
+    let net = generateNetPlayerList [avg] avail
+    print ("Net Stats:")
+    print net
+
     putStrLn "Done."
 
 generatePlayerList :: [String] -> [Player]
@@ -37,24 +48,44 @@ generatePlayer playerString = case (splitOn "," playerString) of
         (read tov :: Float) 
         (read pts :: Float)
 
--- generateNetPlayer :: Player -> [Player] -> NetPlayer
--- generateNetPlayer player roster :: NetPlayer ()
+generateNetPlayerList :: [Player] -> [Player] -> [NetPlayer]
+generateNetPlayerList roster avail = [ generateNetPlayer p roster | p <- avail]
+
+generateNetPlayer :: Player -> [Player] -> NetPlayer
+generateNetPlayer player roster = NetPlayer 
+    (pName player)
+    (diffPercentageStat pFGM pFGA) 
+    (diffPercentageStat pFTM pFTA) 
+    (diffCountingStat p3PM) 
+    (diffCountingStat pREB) 
+    (diffCountingStat pAST) 
+    (diffCountingStat pSTL) 
+    (diffCountingStat pBLK) 
+    (diffCountingStat pTOV) 
+    (diffCountingStat pPTS)
+    where 
+        diffPercentageStat = (\ fm fa -> (fm with / fa with) - (fm without / fa without) )
+        diffCountingStat = (\ f -> ((f with) / ((len roster)+1)) - ((f without) / (len roster)) )
+        len = (\ x -> fromIntegral (length x) :: Float)
+        with = totals (player:roster)
+        without = totals roster
+
 
 averages :: [Player] -> Player
 averages xs = (\ a -> Player 
         ("Averages")
-        ((pFGM a) / (fromIntegral (length xs) :: Float)) 
-        ((pFGA a) / (fromIntegral (length xs) :: Float)) 
-        ((pFTM a) / (fromIntegral (length xs) :: Float)) 
-        ((pFTA a) / (fromIntegral (length xs) :: Float)) 
-        ((p3PM a) / (fromIntegral (length xs) :: Float)) 
-        ((pREB a) / (fromIntegral (length xs) :: Float)) 
-        ((pAST a) / (fromIntegral (length xs) :: Float)) 
-        ((pSTL a) / (fromIntegral (length xs) :: Float)) 
-        ((pBLK a) / (fromIntegral (length xs) :: Float)) 
-        ((pTOV a) / (fromIntegral (length xs) :: Float)) 
-        ((pPTS a) / (fromIntegral (length xs) :: Float))
-    ) (totals xs) 
+        ((pFGM a) / len) 
+        ((pFGA a) / len) 
+        ((pFTM a) / len) 
+        ((pFTA a) / len) 
+        ((p3PM a) / len) 
+        ((pREB a) / len) 
+        ((pAST a) / len) 
+        ((pSTL a) / len) 
+        ((pBLK a) / len) 
+        ((pTOV a) / len) 
+        ((pPTS a) / len)
+    ) (totals xs) where len = (fromIntegral (length xs) :: Float)
 
 
 totals :: [Player] -> Player
