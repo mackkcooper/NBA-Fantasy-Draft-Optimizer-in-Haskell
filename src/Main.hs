@@ -11,21 +11,25 @@ main = do
     -- print ("Players")
     -- print avail
 
-    -- let tot = totals avail
+    let tot = playerTotals avail
     -- print ("Totals:")
     -- print tot
 
-    let avg = averages avail
+    let avg = playerAverages avail
     -- print ("Averages:")
     -- print avg
 
-    -- let std = playerStdDev pPTS (avail)
+    let std = playerStdDev pPTS (avail)
     -- print ("Std Devs:")
     -- print std
 
     let net = generateNetPlayerList [avg] avail
     -- print ("Net Stats:")
     -- print net
+
+    let net_avg = netPlayerAverages net
+    -- print ("Net Averages:")
+    -- print net_avg
 
     putStrLn "Done."
 
@@ -69,25 +73,8 @@ generatePlayerList (x:xs) = fmap (generatePlayer) xs
 generatePlayerList [] = []
 
 
-averages :: [Player] -> Player
-averages xs = (\ a -> Player 
-        ("Averages")
-        ((pFGM a) / len) 
-        ((pFGA a) / len) 
-        ((pFTM a) / len) 
-        ((pFTA a) / len) 
-        ((p3PM a) / len) 
-        ((pREB a) / len) 
-        ((pAST a) / len) 
-        ((pSTL a) / len) 
-        ((pBLK a) / len) 
-        ((pTOV a) / len) 
-        ((pPTS a) / len)
-    ) (totals xs) where len = (fromIntegral (length xs) :: Float)
-
-
-totals :: [Player] -> Player
-totals (x:xs) = foldl (\ a b -> Player 
+playerTotals :: [Player] -> Player
+playerTotals (x:xs) = foldl (\ a b -> Player 
         ("Totals") 
         ((pFGM a) + (pFGM b)) 
         ((pFGA a) + (pFGA b)) 
@@ -101,12 +88,29 @@ totals (x:xs) = foldl (\ a b -> Player
         ((pTOV a) + (pTOV b)) 
         ((pPTS a) + (pPTS b)) 
     ) x xs
-totals [] = Player "Totals" 0 0 0 0 0 0 0 0 0 0 0
+playerTotals [] = Player "Totals" 0 0 0 0 0 0 0 0 0 0 0
+
+
+playerAverages :: [Player] -> Player
+playerAverages xs = (\ a -> Player 
+        ("Averages")
+        ((pFGM a) / len) 
+        ((pFGA a) / len) 
+        ((pFTM a) / len) 
+        ((pFTA a) / len) 
+        ((p3PM a) / len) 
+        ((pREB a) / len) 
+        ((pAST a) / len) 
+        ((pSTL a) / len) 
+        ((pBLK a) / len) 
+        ((pTOV a) / len) 
+        ((pPTS a) / len)
+    ) (playerTotals xs) where len = (fromIntegral (length xs) :: Float)
 
 
 playerStdDev :: (Player -> Float) -> [Player] -> Float
 playerStdDev f xs = sqrt (summation / size) where 
-    mean = f (averages xs)
+    mean = f (playerAverages xs)
     size = fromIntegral (length xs) :: Float
     summation = sum (fmap sum_func xs)
     sum_func = (\ player -> ((f player) - mean) ^ 2 )
@@ -142,9 +146,48 @@ generateNetPlayer player roster = NetPlayer
         diffPercentageStat = (\ fm fa -> (fm with / fa with) - (fm without / fa without) )
         diffCountingStat = (\ f -> ((f with) / ((len roster)+1)) - ((f without) / (len roster)) )
         len = (\ x -> fromIntegral (length x) :: Float)
-        with = totals (player:roster)
-        without = totals roster
+        with = playerTotals (player:roster)
+        without = playerTotals roster
 
 
 generateNetPlayerList :: [Player] -> [Player] -> [NetPlayer]
 generateNetPlayerList roster avail = [ generateNetPlayer p roster | p <- avail]
+
+
+netPlayerTotals :: [NetPlayer] -> NetPlayer
+netPlayerTotals (x:xs) = foldl (\ a b -> NetPlayer 
+        ("Totals") 
+        ((nFGP a) + (nFGP b)) 
+        ((nFTP a) + (nFTP b))
+        ((n3PM a) + (n3PM b)) 
+        ((nREB a) + (nREB b)) 
+        ((nAST a) + (nAST b)) 
+        ((nSTL a) + (nSTL b)) 
+        ((nBLK a) + (nBLK b)) 
+        ((nTOV a) + (nTOV b)) 
+        ((nPTS a) + (nPTS b)) 
+    ) x xs
+netPlayerTotals [] = NetPlayer "Totals" 0 0 0 0 0 0 0 0 0
+
+
+netPlayerAverages :: [NetPlayer] -> NetPlayer
+netPlayerAverages xs = (\ a -> NetPlayer 
+        ("Averages")
+        ((nFGP a) / len)
+        ((nFTP a) / len)
+        ((n3PM a) / len) 
+        ((nREB a) / len) 
+        ((nAST a) / len) 
+        ((nSTL a) / len) 
+        ((nBLK a) / len) 
+        ((nTOV a) / len) 
+        ((nPTS a) / len)
+    ) (netPlayerTotals xs) where len = (fromIntegral (length xs) :: Float)
+
+
+-- netPlayerStdDev :: (NetPlayer -> Float) -> [NetPlayer] -> Float
+-- netPlayerStdDev f xs = sqrt (summation / size) where 
+--     mean = f (netPlayerAverages xs)
+--     size = fromIntegral (length xs) :: Float
+--     summation = sum (fmap sum_func xs)
+--     sum_func = (\ player -> ((f player) - mean) ^ 2 )
