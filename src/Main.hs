@@ -206,12 +206,12 @@ netPlayerAverages xs = (\ a -> NetPlayer
     ) (netPlayerTotals xs) where len = (fromIntegral (length xs) :: Float)
 
 
--- netPlayerStdDev :: (NetPlayer -> Float) -> [NetPlayer] -> Float
--- netPlayerStdDev f xs = sqrt (summation / size) where 
---     mean = f (netPlayerAverages xs)
---     size = fromIntegral (length xs) :: Float
---     summation = sum (fmap sum_func xs)
---     sum_func = (\ player -> ((f player) - mean) ^ 2 )
+netPlayerStdDev :: (NetPlayer -> Float) -> [NetPlayer] -> Float
+netPlayerStdDev f xs = sqrt (summation / size) where 
+    mean = f (netPlayerAverages xs)
+    size = fromIntegral (length xs) :: Float
+    summation = sum (fmap sum_func xs)
+    sum_func = (\ player -> ((f player) - mean) ^ 2 )
 
 
 netPlayerToStr :: NetPlayer -> String
@@ -224,14 +224,15 @@ netPlayerToStr p =
     (show (nAST p)) ++ " | " ++
     (show (nSTL p)) ++ " | " ++
     (show (nBLK p)) ++ " | " ++
-    (show (nTOV p)) ++ " | "
+    (show (nTOV p)) ++ " | " ++
+    (show (nPTS p))
 
 
 netPlayerListToStr :: [NetPlayer] -> String
 netPlayerListToStr list = case fmap netPlayerToStr list of
     (x:xs) -> header ++ (foldl (\ a b -> a ++ "\n" ++ b) x xs) ++ "\n"
     [] -> "\nEmpty Net Player List\n"
-    where header = "\nNET PLAYER NAME | FGP | FTP | 3PM | REB | AST | STL | BLK | TOV | PTS\n"
+    where header = "\nNET PLAYER NAME | nFGP | nFTP | n3PM | nREB | nAST | nSTL | nBLK | nTOV | nPTS\n"
 
 
 printNetPlayers :: IO ()
@@ -242,3 +243,70 @@ printNetPlayers = do
     let avg = playerAverages avail
     let net = generateNetPlayerList [avg] avail
     putStrLn (netPlayerListToStr net)
+
+
+data ZPlayer = ZPlayer {
+    zName :: String,
+    zFGP :: Float,
+    zFTP :: Float,
+    z3PM :: Float,
+    zREB :: Float,
+    zAST :: Float,
+    zSTL :: Float,
+    zBLK :: Float,
+    zTOV :: Float,
+    zPTS :: Float
+} deriving (Show)
+
+
+generateZPlayer :: NetPlayer -> [NetPlayer] -> ZPlayer
+generateZPlayer player xs = ZPlayer
+    (nName player)
+    (z_score nFGP)
+    (z_score nFTP)
+    (z_score n3PM)
+    (z_score nREB)
+    (z_score nAST)
+    (z_score nSTL)
+    (z_score nBLK)
+    (z_score nTOV)
+    (z_score nPTS) where
+        z_score = (\ f -> ( (f player) - (avg f) ) / (std f) )
+        avg = (\ f -> f (netPlayerAverages xs) )
+        std = (\ f -> netPlayerStdDev f xs)
+
+
+generateZPlayerList :: [NetPlayer] -> [ZPlayer]
+generateZPlayerList xs = [ generateZPlayer x xs | x <- xs]
+
+
+zPlayerToStr :: ZPlayer -> String
+zPlayerToStr p = 
+    (zName p) ++ " | " ++
+    (show (zFGP p)) ++ " | " ++
+    (show (zFTP p)) ++ " | " ++
+    (show (z3PM p)) ++ " | " ++
+    (show (zREB p)) ++ " | " ++
+    (show (zAST p)) ++ " | " ++
+    (show (zSTL p)) ++ " | " ++
+    (show (zBLK p)) ++ " | " ++
+    (show (zTOV p)) ++ " | " ++
+    (show (zPTS p))
+
+
+zPlayerListToStr :: [ZPlayer] -> String
+zPlayerListToStr list = case fmap zPlayerToStr list of
+    (x:xs) -> header ++ (foldl (\ a b -> a ++ "\n" ++ b) x xs) ++ "\n"
+    [] -> "\nEmpty Z Player List\n"
+    where header = "\nZ PLAYER NAME | zFGP | zFTP | z3PM | zREB | zAST | zSTL | zBLK | zTOV | zPTS\n"
+
+
+printZPlayers :: IO ()
+printZPlayers = do
+    csvData <- readFile "data/data_set.csv"
+    let my_players = (lines csvData)
+    let avail = generatePlayerList my_players
+    let avg = playerAverages avail
+    let net = generateNetPlayerList [avg] avail
+    let z = generateZPlayerList net
+    putStrLn (zPlayerListToStr z)
